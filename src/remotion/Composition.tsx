@@ -8,17 +8,44 @@ import {
   spring,
   Sequence,
   staticFile,
+  delayRender,
+  continueRender,
 } from 'remotion';
+import { loadFont } from '@remotion/fonts';
 import { getBehavior } from './behaviors';
 import { getAnimation } from './animations';
 import type { ImageMotion } from './animations';
 import type { RenderProps } from '../config';
 import { BRAND } from '../config';
 
-// Liberation Sans primary — proven to render Spanish accents (é, á, í, ó, ú)
-// Inter as secondary via fonts-inter Debian package
+// Load Inter font files with full latin-ext (Spanish accents)
+const waitForFonts = delayRender('Loading Inter fonts');
+
+Promise.all([
+  loadFont({
+    family: 'Inter',
+    url: staticFile('fonts/Inter-Regular.ttf'),
+    weight: '400',
+  }),
+  loadFont({
+    family: 'Inter',
+    url: staticFile('fonts/Inter-SemiBold.ttf'),
+    weight: '600',
+  }),
+  loadFont({
+    family: 'Inter',
+    url: staticFile('fonts/Inter-Bold.ttf'),
+    weight: '700',
+  }),
+]).then(() => {
+  continueRender(waitForFonts);
+}).catch((err) => {
+  console.error('Font loading failed:', err);
+  continueRender(waitForFonts);
+});
+
 const FONT_BRAND = `'Times New Roman', 'Georgia', serif`;
-const FONT_BODY = `'Liberation Sans', 'Inter', 'DejaVu Sans', 'Noto Sans', sans-serif`;
+const FONT_BODY = `'Inter', 'Liberation Sans', 'DejaVu Sans', sans-serif`;
 
 export const VideoComposition: React.FC<RenderProps> = ({
   canvas,
