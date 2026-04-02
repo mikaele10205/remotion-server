@@ -351,7 +351,23 @@ const SceneText: React.FC<{
     }
   }
 
-  const fontSize = Math.round(width * 0.045);
+  // Font size responsive to aspect ratio
+  const aspect = width / height;
+  let fontScale: number;
+  if (aspect >= 1.5) {
+    // Paisaje (16:9): smaller text relative to width
+    fontScale = 0.028;
+  } else if (aspect >= 1.0) {
+    // Cuadrado (1:1): medium
+    fontScale = 0.038;
+  } else if (aspect >= 0.7) {
+    // Retrato (4:5): medium-large
+    fontScale = 0.04;
+  } else {
+    // Vertical (9:16): use height-based sizing for readability
+    fontScale = 0.042;
+  }
+  const fontSize = Math.round(width * fontScale);
 
   return (
     <AbsoluteFill
@@ -384,6 +400,8 @@ const SceneText: React.FC<{
 
 // --- Helpers ---
 
+const MAX_CHARS_PER_SCENE = 80;
+
 function splitIntoScenes(text: string, sceneCount: number): string[] {
   if (!text || sceneCount <= 0) return [];
 
@@ -394,7 +412,7 @@ function splitIntoScenes(text: string, sceneCount: number): string[] {
     while (scenes.length < sceneCount) {
       scenes.push('');
     }
-    return scenes.filter(s => s.trim());
+    return scenes.filter(s => s.trim()).map(s => truncateScene(s));
   }
 
   const perScene = Math.ceil(sentences.length / sceneCount);
@@ -404,5 +422,13 @@ function splitIntoScenes(text: string, sceneCount: number): string[] {
     const end = Math.min(start + perScene, sentences.length);
     scenes.push(sentences.slice(start, end).join(' ').trim());
   }
-  return scenes.filter(s => s.trim());
+  return scenes.filter(s => s.trim()).map(s => truncateScene(s));
+}
+
+function truncateScene(text: string): string {
+  if (text.length <= MAX_CHARS_PER_SCENE) return text;
+  // Cut at last space before limit
+  const cut = text.lastIndexOf(' ', MAX_CHARS_PER_SCENE);
+  if (cut > 0) return text.substring(0, cut) + '...';
+  return text.substring(0, MAX_CHARS_PER_SCENE) + '...';
 }
