@@ -400,7 +400,7 @@ const SceneText: React.FC<{
 
 // --- Helpers ---
 
-const MAX_CHARS_PER_SCENE = 50;
+const MAX_CHARS_PER_SCENE = 25;
 
 function splitIntoScenes(text: string, sceneCount: number): string[] {
   if (!text || sceneCount <= 0) return [];
