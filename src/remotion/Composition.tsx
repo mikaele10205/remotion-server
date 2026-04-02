@@ -355,11 +355,11 @@ const SceneText: React.FC<{
   const aspect = width / height;
   let fontScale: number;
   if (aspect >= 1.5) {
-    // Paisaje (16:9)
-    fontScale = 0.038;
+    // Paisaje (16:9 y 16:9 HD)
+    fontScale = 0.046;
   } else if (aspect >= 1.0) {
-    // Cuadrado (1:1)
-    fontScale = 0.068;
+    // Cuadrado (1:1) — mismo que retrato
+    fontScale = 0.08;
   } else if (aspect >= 0.7) {
     // Retrato (4:5)
     fontScale = 0.08;
