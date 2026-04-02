@@ -14,15 +14,11 @@ import { getAnimation } from './animations';
 import type { ImageMotion } from './animations';
 import type { RenderProps } from '../config';
 import { BRAND } from '../config';
-import { loadFont as loadInter } from '@remotion/google-fonts/Inter';
 
-const { fontFamily: interFont } = loadInter('normal', {
-  subsets: ['latin', 'latin-ext'],
-  weights: ['400', '500', '600', '700'],
-});
-
+// Inter installed as system font via Dockerfile (fonts-inter package)
+// Falls back to Liberation Sans / DejaVu Sans for full Spanish accent support
 const FONT_BRAND = `'Times New Roman', 'Georgia', serif`;
-const FONT_BODY = `${interFont}, system-ui, sans-serif`;
+const FONT_BODY = `'Inter', 'Liberation Sans', 'DejaVu Sans', 'Noto Sans', sans-serif`;
 
 export const VideoComposition: React.FC<RenderProps> = ({
   canvas,
@@ -215,9 +211,9 @@ const SceneFlash: React.FC<{ type: string; fps: number }> = ({ type, fps }) => {
       color = 'rgba(0,0,0,0.6)';
       break;
     case 'entretenimiento':
-      // Subtle color flash
-      opacity = interpolate(frame, [0, 2, 4], [0, 0.15, 0], { extrapolateRight: 'clamp' });
-      color = `rgba(0,0,255,0.15)`;
+      // Color flash with personality
+      opacity = interpolate(frame, [0, 2, 4], [0, 0.35, 0], { extrapolateRight: 'clamp' });
+      color = 'rgba(0,0,255,0.3)';
       break;
     default:
       opacity = interpolate(frame, [0, 2, 4], [0, 0.1, 0], { extrapolateRight: 'clamp' });

@@ -22,6 +22,7 @@ RUN apt-get update && apt-get install -y \
   fonts-noto-core \
   fonts-noto-color-emoji \
   fonts-noto-cjk \
+  fonts-inter \
   && rm -rf /var/lib/apt/lists/* \
   && fc-cache -f -v
 
