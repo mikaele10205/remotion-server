@@ -355,17 +355,17 @@ const SceneText: React.FC<{
   const aspect = width / height;
   let fontScale: number;
   if (aspect >= 1.5) {
-    // Paisaje (16:9): smaller text relative to width
-    fontScale = 0.028;
+    // Paisaje (16:9)
+    fontScale = 0.055;
   } else if (aspect >= 1.0) {
-    // Cuadrado (1:1): medium
-    fontScale = 0.038;
+    // Cuadrado (1:1)
+    fontScale = 0.075;
   } else if (aspect >= 0.7) {
-    // Retrato (4:5): medium-large
-    fontScale = 0.04;
+    // Retrato (4:5)
+    fontScale = 0.08;
   } else {
-    // Vertical (9:16): use height-based sizing for readability
-    fontScale = 0.042;
+    // Vertical (9:16)
+    fontScale = 0.085;
   }
   const fontSize = Math.round(width * fontScale);
 
