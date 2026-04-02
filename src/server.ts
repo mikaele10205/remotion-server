@@ -17,11 +17,27 @@ let bundleLocation: string | null = null;
 let bundling = false;
 
 const PORT = parseInt(process.env.PORT || '3000', 10);
+const API_KEY = process.env.REMOTION_API_KEY || '';
+const RENDER_TIMEOUT_MS = parseInt(process.env.RENDER_TIMEOUT_MS || '180000', 10);
 const OUT_DIR = path.join(os.tmpdir(), 'remotion-renders');
 
 // Ensure output directory exists
 if (!fs.existsSync(OUT_DIR)) {
   fs.mkdirSync(OUT_DIR, { recursive: true });
+}
+
+// --- Auth middleware for /render ---
+function authGuard(req: express.Request, res: express.Response, next: express.NextFunction) {
+  if (!API_KEY) {
+    next();
+    return;
+  }
+  const token = req.headers['x-api-key'] || req.headers['authorization']?.replace('Bearer ', '');
+  if (token !== API_KEY) {
+    res.status(401).json({ error: 'Unauthorized. Provide x-api-key header.' });
+    return;
+  }
+  next();
 }
 
 // --- Health check ---
@@ -38,7 +54,7 @@ app.get('/health', (_req, res) => {
 });
 
 // --- Render endpoint ---
-app.post('/render', async (req, res) => {
+app.post('/render', authGuard, async (req, res) => {
   const startTime = Date.now();
   const jobId = uuidv4();
 
@@ -96,7 +112,16 @@ app.post('/render', async (req, res) => {
   console.log(`[Render] Job ${jobId} received for ${plataforma} (${canvas}, ${comportamiento}, ${animacion}, ${duracion_segundos}s)`);
 
   try {
-    const result = await renderQueue.enqueue(jobId, async () => {
+    const renderWithTimeout = <T>(promise: Promise<T>): Promise<T> => {
+      return Promise.race([
+        promise,
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error(`Render timed out after ${RENDER_TIMEOUT_MS}ms`)), RENDER_TIMEOUT_MS)
+        ),
+      ]);
+    };
+
+    const result = await renderWithTimeout(renderQueue.enqueue(jobId, async () => {
       // Select composition with dynamic metadata (dimensions, duration)
       const composition = await selectComposition({
         serveUrl: bundleLocation!,
@@ -123,7 +148,7 @@ app.post('/render', async (req, res) => {
       });
 
       return outputPath;
-    });
+    }));
 
     const elapsedMs = Date.now() - startTime;
     const stats = fs.statSync(result);
