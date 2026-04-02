@@ -17,9 +17,13 @@ FROM node:22-bookworm
 # Install Chromium dependencies for Remotion
 RUN apt-get update && apt-get install -y \
   chromium \
+  fonts-dejavu-core \
+  fonts-liberation \
+  fonts-noto-core \
   fonts-noto-color-emoji \
   fonts-noto-cjk \
-  && rm -rf /var/lib/apt/lists/*
+  && rm -rf /var/lib/apt/lists/* \
+  && fc-cache -f -v
 
 WORKDIR /app
 

@@ -105,7 +105,7 @@ export const VideoComposition: React.FC<RenderProps> = ({
           style={{
             color: 'rgba(255,255,255,0.8)',
             fontSize: Math.round(width * 0.025),
-            fontFamily: 'Arial, sans-serif',
+            fontFamily: "'Liberation Sans', 'DejaVu Sans', 'Noto Sans', sans-serif",
             fontWeight: 700,
             letterSpacing: 1,
           }}
@@ -184,7 +184,7 @@ const SceneText: React.FC<{
         style={{
           color: 'white',
           fontSize,
-          fontFamily: 'Arial, sans-serif',
+          fontFamily: "'Liberation Sans', 'DejaVu Sans', 'Noto Sans', sans-serif",
           fontWeight: 600,
           textAlign: 'center',
           lineHeight: 1.4,
