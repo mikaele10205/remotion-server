@@ -32,3 +32,22 @@ export type RenderProps = {
   plataforma: string;
   modelo_imagen: string;
 };
+
+// --- Brand colors (Xpertia Tech) ---
+export const BRAND = {
+  // Primary
+  blue: '#0000FF',
+  cta: '#22c55e',
+
+  // Text
+  textPrimary: '#0A0A0A',
+  white: '#FFFFFF',
+
+  // Grays (35% distribution)
+  gray200: '#E5E7EB',
+  gray300: '#D1D5DB',
+  gray400: '#9CA3AF',
+
+  // Background
+  bgDark: '#0a0a1a',
+} as const;

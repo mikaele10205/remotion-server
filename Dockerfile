@@ -37,6 +37,9 @@ COPY --from=builder /app/dist ./dist
 COPY src/remotion ./src/remotion
 COPY src/config.ts ./src/config.ts
 
+# Copy public assets (logos, fonts) for Remotion staticFile()
+COPY public ./public
+
 EXPOSE 3000
 
 CMD ["node", "--max-old-space-size=3072", "dist/server.js"]
