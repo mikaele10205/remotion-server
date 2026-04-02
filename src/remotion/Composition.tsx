@@ -11,11 +11,15 @@ import {
 } from 'remotion';
 import { getBehavior } from './behaviors';
 import { getAnimation } from './animations';
+import type { ImageMotion } from './animations';
 import type { RenderProps } from '../config';
 import { BRAND } from '../config';
 import { loadFont as loadInter } from '@remotion/google-fonts/Inter';
 
-const { fontFamily: interFont } = loadInter();
+const { fontFamily: interFont } = loadInter('normal', {
+  subsets: ['latin', 'latin-ext'],
+  weights: ['400', '500', '600', '700'],
+});
 
 const FONT_BRAND = `'Times New Roman', 'Georgia', serif`;
 const FONT_BODY = `${interFont}, system-ui, sans-serif`;
@@ -36,10 +40,10 @@ export const VideoComposition: React.FC<RenderProps> = ({
   const behavior = getBehavior(comportamiento);
   const animation = getAnimation(animacion);
 
-  // --- Layer 2: Image behavior ---
-  const imageScale = getImageScale(behavior.imageAnimation, frame, durationInFrames);
-  const imageTranslateX = getImageTranslateX(behavior.imageAnimation, frame, durationInFrames);
-  const imageTranslateY = getImageTranslateY(behavior.imageAnimation, frame, durationInFrames);
+  // --- Image motion: driven by animation (not just behavior) ---
+  // Behavior determines IF text shows; animation determines HOW everything moves
+  const motionType = behavior.showTextOverlay ? animation.imageMotion : behavior.imageAnimation as ImageMotion;
+  const imageTransform = getImageTransform(motionType, frame, durationInFrames, fps);
 
   // --- Layer 3: Scene timing ---
   const scenes = copy ? splitIntoScenes(copy, animation.sceneCount) : [];
@@ -55,42 +59,51 @@ export const VideoComposition: React.FC<RenderProps> = ({
   );
   const masterOpacity = fadeIn * fadeOut;
 
-  // --- Logo fade-in (appears after 0.3s, fades in over 0.5s) ---
+  // --- Logo fade-in ---
   const logoOpacity = interpolate(frame, [fps * 0.3, fps * 0.8], [0, 0.9], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
   });
 
-  // Logo size responsive to canvas
   const logoHeight = Math.round(height * 0.04);
   const logoPadding = Math.round(width * 0.03);
 
-  // Gradient style per animation type
   const gradientStyle = getGradientForAnimation(animation.id);
 
   return (
     <AbsoluteFill style={{ backgroundColor: BRAND.bgDark, opacity: masterOpacity }}>
-      {/* Background image with behavior animation */}
+      {/* Background image with animation-driven motion */}
       {imageUrl && (
-        <AbsoluteFill>
+        <AbsoluteFill style={{ overflow: 'hidden' }}>
           <Img
             src={imageUrl}
             style={{
               width: '100%',
               height: '100%',
               objectFit: 'cover',
-              transform: `scale(${imageScale}) translate(${imageTranslateX}%, ${imageTranslateY}%)`,
+              transform: imageTransform,
             }}
           />
         </AbsoluteFill>
       )}
 
-      {/* Gradient overlay for text readability (only if showing text) */}
+      {/* Gradient overlay for text readability */}
       {behavior.showTextOverlay && copy && (
         <AbsoluteFill style={{ background: gradientStyle }} />
       )}
 
-      {/* Text overlay - scenes (only for Style B/C with copy) */}
+      {/* Scene flash/separator between scenes (visible transition marker) */}
+      {behavior.showTextOverlay && copy && animation.id !== 'comunicativa' && scenes.map((_, i) => {
+        if (i === 0) return null;
+        const flashAt = i * framesPerScene;
+        return (
+          <Sequence key={`flash-${i}`} from={flashAt - 2} durationInFrames={4}>
+            <SceneFlash type={animation.id} fps={fps} />
+          </Sequence>
+        );
+      })}
+
+      {/* Text overlay - scenes */}
       {behavior.showTextOverlay && copy && scenes.map((sceneText, i) => {
         const sceneStart = i * framesPerScene;
 
@@ -131,6 +144,86 @@ export const VideoComposition: React.FC<RenderProps> = ({
       </AbsoluteFill>
     </AbsoluteFill>
   );
+};
+
+// --- Image transform per animation type ---
+function getImageTransform(motion: ImageMotion | string, frame: number, total: number, fps: number): string {
+  const progress = frame / total;
+
+  switch (motion) {
+    case 'slow_zoom': {
+      // Educativa: very gentle zoom in, almost imperceptible
+      const scale = interpolate(frame, [0, total], [1.0, 1.06], { extrapolateRight: 'clamp' });
+      return `scale(${scale})`;
+    }
+    case 'ken_burns_left': {
+      // Publicitaria: zoom + pan left — dynamic, drives eye movement
+      const scale = interpolate(frame, [0, total], [1.0, 1.18], { extrapolateRight: 'clamp' });
+      const tx = interpolate(frame, [0, total], [2, -3], { extrapolateRight: 'clamp' });
+      const ty = interpolate(frame, [0, total], [0, -1], { extrapolateRight: 'clamp' });
+      return `scale(${scale}) translate(${tx}%, ${ty}%)`;
+    }
+    case 'ken_burns_right': {
+      // Comunicativa: zoom + pan right — balanced, professional
+      const scale = interpolate(frame, [0, total], [1.05, 1.12], { extrapolateRight: 'clamp' });
+      const tx = interpolate(frame, [0, total], [-1, 2], { extrapolateRight: 'clamp' });
+      return `scale(${scale}) translate(${tx}%, 0%)`;
+    }
+    case 'zoom_pulse': {
+      // Promocional: pulsing zoom that breathes with urgency
+      const baseScale = interpolate(frame, [0, total], [1.0, 1.15], { extrapolateRight: 'clamp' });
+      const pulse = Math.sin(progress * Math.PI * 6) * 0.03;
+      return `scale(${baseScale + pulse})`;
+    }
+    case 'pan_horizontal': {
+      // Entretenimiento: slow horizontal sweep with slight zoom
+      const scale = interpolate(frame, [0, total], [1.1, 1.15], { extrapolateRight: 'clamp' });
+      const tx = interpolate(frame, [0, total], [-3, 3], { extrapolateRight: 'clamp' });
+      const ty = Math.sin(progress * Math.PI * 2) * 0.5;
+      return `scale(${scale}) translate(${tx}%, ${ty}%)`;
+    }
+    case 'dramatic_zoom': {
+      // Debate: starts wide, then slow intentional zoom — builds tension
+      const scale = interpolate(frame, [0, total * 0.3, total], [1.0, 1.02, 1.2], { extrapolateRight: 'clamp' });
+      const ty = interpolate(frame, [0, total], [0, -1.5], { extrapolateRight: 'clamp' });
+      return `scale(${scale}) translate(0%, ${ty}%)`;
+    }
+    default: {
+      // Fallback: behavior-based (Style A)
+      const scale = interpolate(frame, [0, total], [1.0, 1.08], { extrapolateRight: 'clamp' });
+      return `scale(${scale})`;
+    }
+  }
+}
+
+// --- Scene flash/separator component ---
+const SceneFlash: React.FC<{ type: string; fps: number }> = ({ type, fps }) => {
+  const frame = useCurrentFrame();
+  let opacity = 0;
+  let color = 'rgba(255,255,255,0.15)';
+
+  switch (type) {
+    case 'publicitaria':
+    case 'promocional':
+      // Quick white flash
+      opacity = interpolate(frame, [0, 2, 4], [0, 0.2, 0], { extrapolateRight: 'clamp' });
+      color = 'rgba(255,255,255,0.25)';
+      break;
+    case 'debate':
+      // Dark flash (dramatic)
+      opacity = interpolate(frame, [0, 1, 4], [0, 0.4, 0], { extrapolateRight: 'clamp' });
+      color = 'rgba(0,0,0,0.6)';
+      break;
+    case 'entretenimiento':
+      // Subtle color flash
+      opacity = interpolate(frame, [0, 2, 4], [0, 0.15, 0], { extrapolateRight: 'clamp' });
+      color = `rgba(0,0,255,0.15)`;
+      break;
+    default:
+      opacity = interpolate(frame, [0, 2, 4], [0, 0.1, 0], { extrapolateRight: 'clamp' });
+  }
+
+  return <AbsoluteFill style={{ backgroundColor: color, opacity }} />;
 };
 
 // --- Gradient per animation type ---
@@ -182,7 +275,6 @@ const SceneText: React.FC<{
       const enterT = enterDuration * 1.5;
       opacity = interpolate(frame, [0, enterT], [0, 1], { extrapolateRight: 'clamp' })
         * interpolate(frame, [exitStart, framesPerScene], [1, 0], { extrapolateLeft: 'clamp' });
-      // Subtle float up
       translateY = interpolate(frame, [0, enterT], [8, 0], { extrapolateRight: 'clamp' });
       break;
     }
@@ -193,7 +285,6 @@ const SceneText: React.FC<{
       scale = interpolate(slideSpring, [0, 1], [0.9, 1]);
       opacity = interpolate(frame, [0, enterDuration * 0.3], [0, 1], { extrapolateRight: 'clamp' })
         * interpolate(frame, [exitStart, framesPerScene], [1, 0], { extrapolateLeft: 'clamp' });
-      // CTA bounce on last scene
       if (isLastScene) {
         const ctaBounce = spring({ frame: Math.max(0, frame - enterDuration), fps, config: { damping: 8, stiffness: 150 } });
         scale = scale * interpolate(ctaBounce, [0, 1], [0.95, 1.02]);
@@ -226,7 +317,7 @@ const SceneText: React.FC<{
       break;
     }
     case 'contrast': {
-      // Debate: dramatic pause then sharp appear, deliberate hold
+      // Debate: dramatic pause then sharp appear
       const pauseFrames = Math.round(fps * 0.3);
       const afterPause = Math.max(0, frame - pauseFrames);
       const revealSpring = spring({ frame: afterPause, fps, config: { damping: 15, stiffness: 200 } });
@@ -269,39 +360,6 @@ const SceneText: React.FC<{
 };
 
 // --- Helpers ---
-
-function getImageScale(animationType: string, frame: number, total: number): number {
-  switch (animationType) {
-    case 'zoom_slow':
-      return interpolate(frame, [0, total], [1.0, 1.08], { extrapolateRight: 'clamp' });
-    case 'ken_burns':
-      return interpolate(frame, [0, total], [1.0, 1.15], { extrapolateRight: 'clamp' });
-    case 'zoom_medium':
-      return interpolate(frame, [0, total], [1.0, 1.12], { extrapolateRight: 'clamp' });
-    default:
-      return 1.0;
-  }
-}
-
-function getImageTranslateX(animationType: string, frame: number, total: number): number {
-  switch (animationType) {
-    case 'ken_burns':
-      return interpolate(frame, [0, total], [0, -2], { extrapolateRight: 'clamp' });
-    default:
-      return 0;
-  }
-}
-
-function getImageTranslateY(animationType: string, frame: number, total: number): number {
-  switch (animationType) {
-    case 'ken_burns':
-      return interpolate(frame, [0, total], [0, -1], { extrapolateRight: 'clamp' });
-    case 'zoom_slow':
-      return interpolate(frame, [0, total], [0, -0.5], { extrapolateRight: 'clamp' });
-    default:
-      return 0;
-  }
-}
 
 function splitIntoScenes(text: string, sceneCount: number): string[] {
   if (!text || sceneCount <= 0) return [];

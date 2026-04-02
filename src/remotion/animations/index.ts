@@ -6,10 +6,13 @@ export type AnimationId =
   | 'entretenimiento'
   | 'debate';
 
+export type ImageMotion = 'slow_zoom' | 'ken_burns_left' | 'ken_burns_right' | 'zoom_pulse' | 'pan_horizontal' | 'dramatic_zoom';
+
 export type AnimationConfig = {
   id: AnimationId;
   rhythm: 'slow' | 'medium' | 'medium_high' | 'high' | 'dynamic' | 'dramatic';
   transitionType: 'fade' | 'slide' | 'clean' | 'bounce' | 'character' | 'contrast';
+  imageMotion: ImageMotion;
   sceneCount: number;
   description: string;
 };
@@ -19,6 +22,7 @@ const ANIMATIONS: Record<AnimationId, AnimationConfig> = {
     id: 'educativa',
     rhythm: 'slow',
     transitionType: 'fade',
+    imageMotion: 'slow_zoom',
     sceneCount: 3,
     description: 'Slow rhythm, soft transitions, long scenes.',
   },
@@ -26,6 +30,7 @@ const ANIMATIONS: Record<AnimationId, AnimationConfig> = {
     id: 'publicitaria',
     rhythm: 'medium_high',
     transitionType: 'slide',
+    imageMotion: 'ken_burns_left',
     sceneCount: 4,
     description: 'Medium-high rhythm, movement transitions, strong CTA close.',
   },
@@ -33,6 +38,7 @@ const ANIMATIONS: Record<AnimationId, AnimationConfig> = {
     id: 'comunicativa',
     rhythm: 'medium',
     transitionType: 'clean',
+    imageMotion: 'ken_burns_right',
     sceneCount: 3,
     description: 'Medium rhythm, clean neutral transitions.',
   },
@@ -40,6 +46,7 @@ const ANIMATIONS: Record<AnimationId, AnimationConfig> = {
     id: 'promocional',
     rhythm: 'high',
     transitionType: 'bounce',
+    imageMotion: 'zoom_pulse',
     sceneCount: 5,
     description: 'High rhythm, quick cuts, urgency feel.',
   },
@@ -47,6 +54,7 @@ const ANIMATIONS: Record<AnimationId, AnimationConfig> = {
     id: 'entretenimiento',
     rhythm: 'dynamic',
     transitionType: 'character',
+    imageMotion: 'pan_horizontal',
     sceneCount: 4,
     description: 'Dynamic with personality, character transitions.',
   },
@@ -54,6 +62,7 @@ const ANIMATIONS: Record<AnimationId, AnimationConfig> = {
     id: 'debate',
     rhythm: 'dramatic',
     transitionType: 'contrast',
+    imageMotion: 'dramatic_zoom',
     sceneCount: 3,
     description: 'Dramatic rhythm, deliberate pauses, contrasting transitions.',
   },
