@@ -15,10 +15,10 @@ import type { ImageMotion } from './animations';
 import type { RenderProps } from '../config';
 import { BRAND } from '../config';
 
-// Inter installed as system font via Dockerfile (fonts-inter package)
-// Falls back to Liberation Sans / DejaVu Sans for full Spanish accent support
+// Liberation Sans primary — proven to render Spanish accents (é, á, í, ó, ú)
+// Inter as secondary via fonts-inter Debian package
 const FONT_BRAND = `'Times New Roman', 'Georgia', serif`;
-const FONT_BODY = `'Inter', 'Liberation Sans', 'DejaVu Sans', 'Noto Sans', sans-serif`;
+const FONT_BODY = `'Liberation Sans', 'Inter', 'DejaVu Sans', 'Noto Sans', sans-serif`;
 
 export const VideoComposition: React.FC<RenderProps> = ({
   canvas,
